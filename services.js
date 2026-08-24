@@ -61,7 +61,7 @@
   var langMenu = document.getElementById('langMenu');
   var current  = document.getElementById('langCurrent');
 
-  if (lang && langBtn && langMenu && current) {
+  if (!window.__LX_INLINE_LANGUAGE_SELECTOR && lang && langBtn && langMenu && current) {
     var options = Array.prototype.slice.call(langMenu.querySelectorAll('[role="option"]'));
 
     var openMenu = function (focusActive) {

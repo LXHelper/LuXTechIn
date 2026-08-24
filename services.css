@@ -367,3 +367,15 @@ footer { border-top: 1px solid var(--line); padding: 3rem 0; position: relative;
   100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
 }
 #music-btn:not(.muted) { animation: music-pulse 2.4s ease-out infinite; }
+
+
+/* language selector fallback: keeps menu usable if JS is delayed */
+.lang:hover .lang-menu,
+.lang:focus-within .lang-menu,
+.lang.open .lang-menu {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  display: block !important;
+}

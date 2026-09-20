@@ -55,9 +55,9 @@
 
         /* ---- Atmosphere (same system as lxtech.ro) ---- */
         #gl{position:fixed;inset:0;z-index:0;pointer-events:none;background:
-            radial-gradient(120% 90% at 80% 6%,rgba(53,224,200,.24),transparent 55%),
-            radial-gradient(110% 80% at 8% 96%,rgba(110,232,106,.14),transparent 55%),
-            radial-gradient(120% 90% at 50% 40%,rgba(20,102,184,.2),transparent 60%),var(--bg)}
+            radial-gradient(120% 90% at 78% 8%,rgba(142,123,255,.30),transparent 55%),
+            radial-gradient(110% 80% at 12% 95%,rgba(227,178,107,.18),transparent 55%),
+            radial-gradient(120% 90% at 50% 40%,rgba(91,140,255,.18),transparent 60%),var(--bg)}
         #gl canvas{width:100%!important;height:100%!important;display:block}
         .veil{position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(6,8,15,.35) 0%,rgba(6,8,15,.64) 45%,rgba(6,8,15,.88) 100%)}
         .grain{position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.05;
@@ -475,7 +475,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    /* WebGL aurora, same shader as lxtech.ro, retuned to TransitLive's teal and green */
+    /* WebGL aurora, same shader and colours as lxtech.ro */
     (function () {
         if (reduce || !window.THREE) return;
         try {
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
             host.appendChild(r.domElement);
             var scene = new THREE.Scene(), cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
             var u = { uTime:{value:0}, uScroll:{value:0}, uRes:{value:new THREE.Vector2(innerWidth, innerHeight)},
-                cA:{value:new THREE.Color('#1466B8')}, cB:{value:new THREE.Color('#35E0C8')}, cC:{value:new THREE.Color('#6EE86A')}, cBg:{value:new THREE.Color('#06080F')} };
+                cA:{value:new THREE.Color('#5B8CFF')}, cB:{value:new THREE.Color('#8E7BFF')}, cC:{value:new THREE.Color('#E3B26B')}, cBg:{value:new THREE.Color('#06080F')} };
             var frag = 'precision highp float;uniform float uTime,uScroll;uniform vec2 uRes;uniform vec3 cA,cB,cC,cBg;'
               + 'vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}vec2 mod289(vec2 x){return x-floor(x*(1.0/289.0))*289.0;}'
               + 'vec3 permute(vec3 x){return mod289(((x*34.0)+1.0)*x);}'
@@ -499,9 +499,9 @@ document.addEventListener('DOMContentLoaded', function () {
               + 'float fbm(vec2 p){float s=0.0,a=0.5;for(int i=0;i<5;i++){s+=a*snoise(p);p*=2.02;a*=0.5;}return s;}'
               + 'void main(){vec2 uv=gl_FragCoord.xy/uRes.xy;vec2 p=uv;p.x*=uRes.x/uRes.y;float t=uTime*0.05+uScroll*0.6;'
               + 'float n1=fbm(p*1.6+vec2(t,t*0.6));float n2=fbm(p*2.4-vec2(t*0.7,t*0.4)+n1);float m=smoothstep(-0.6,0.9,n1);'
-              + 'vec3 col=mix(cBg,cA,smoothstep(0.1,0.8,m));col=mix(col,cB,smoothstep(0.35,1.0,n2*0.7+0.4)*0.7);'
-              + 'col=mix(col,cC,pow(smoothstep(0.55,1.0,n2),2.2)*0.35);float vig=smoothstep(1.25,0.2,length(uv-0.5));'
-              + 'col*=mix(0.55,1.0,vig);col=mix(cBg,col,0.85);gl_FragColor=vec4(col,1.0);}';
+              + 'vec3 col=mix(cBg,cA,smoothstep(0.1,0.8,m));col=mix(col,cB,smoothstep(0.3,1.0,n2*0.7+0.4));'
+              + 'col=mix(col,cC,pow(smoothstep(0.55,1.0,n2),2.2)*0.5);float vig=smoothstep(1.25,0.2,length(uv-0.5));'
+              + 'col*=mix(0.55,1.0,vig);col=mix(cBg,col,0.9);gl_FragColor=vec4(col,1.0);}';
             var mat = new THREE.ShaderMaterial({ uniforms: u, fragmentShader: frag, vertexShader: 'void main(){gl_Position=vec4(position,1.0);}' });
             scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat));
             var sN = 0;

@@ -83,10 +83,17 @@ main{padding:clamp(32px,5vh,58px) 0 42px}
 @media(max-width:580px){.shell{width:calc(100% - 36px)}.site-nav{min-height:66px}.brand-word{font-size:10px;letter-spacing:.09em}.heading{font-size:clamp(35px,10vw,52px)}.cards{gap:16px;margin-top:24px}.app-card{padding:24px 22px 22px;border-radius:20px}.app-card h2{margin-top:20px}.desc{font-size:14px}.kind{font-size:9px;letter-spacing:.07em}.logo-wrap.metro-logo{width:145px;height:75px}.logo-wrap.live-logo{width:75px;height:75px}.features{gap:7px;margin:20px 0 27px}.features li{font-size:11px;padding:8px 11px}.actions{gap:9px}.action{min-height:49px;padding:10px 14px}.site-footer{font-size:9px;align-items:flex-start;flex-direction:column;gap:3px}.site-footer span:last-child{text-align:left}}
 @media(max-width:370px){.action{width:100%}.kind{max-width:116px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Restored original fluid WebGL aurora background. CSS drift remains as fallback. */
+.site-bg{z-index:0;background:radial-gradient(120% 90% at 78% 8%,rgba(142,123,255,.3),transparent 55%),radial-gradient(110% 80% at 12% 95%,rgba(227,178,107,.18),transparent 55%),radial-gradient(120% 90% at 50% 40%,rgba(91,140,255,.18),transparent 60%),#06080F}
+.site-bg canvas{position:absolute;inset:0;z-index:0;display:block;width:100%;height:100%;pointer-events:none}
+.site-bg .shade{z-index:2;background:linear-gradient(180deg,rgba(6,8,15,.30) 0%,rgba(6,8,15,.54) 50%,rgba(6,8,15,.79) 100%)}
+.site-bg.has-webgl::before,.site-bg.has-webgl::after{opacity:0;animation:none}
+.site-header,main,.site-footer{position:relative;z-index:1}
 </style>
 </head>
 <body>
-<div class="site-bg" aria-hidden="true"><div class="shade"></div></div>
+<div class="site-bg" id="gl" aria-hidden="true"><div class="shade"></div></div>
 <header class="site-header">
   <div class="shell site-nav">
     <a class="brand" href="/" aria-label="LUXTECH Innovation home"><span class="brand-symbol" aria-hidden="true">L.</span><span class="brand-word">LUXTECH<span>.</span>INNOVATION</span></a>
@@ -120,7 +127,7 @@ main{padding:clamp(32px,5vh,58px) 0 42px}
 (function(){
   'use strict';
   const translations = {
-    en:{eyebrow:'The apps',head1:'Same goal.',head2:'Different approach.',metro_kind:'Metro · Navigation',metro_promise:'A better metro journey, from entrance to platform.',metro_desc:'Find stations, entrances, transfers and the details that make your trip easier.',metro_f1:'Stations & exits',metro_f2:'Platform guidance',metro_f3:'Accessibility',live_kind:'Surface transport · Live',live_promise:'Know where your ride is and when it will arrive.',live_desc:'Follow buses, trams and trolleybuses with live tracking, arrival predictions and journey updates.',live_f1:'Live vehicle tracking',live_f2:'Arrival estimates',live_f3:'Journey updates',download:'Get it on',visit:'Visit website',foot:'Made for Bucharest.'},
+    en:{eyebrow:'The apps',head1:'Same goal.',head2:'Different approach.',metro_kind:'Metro · Navigation',metro_promise:'A better metro journey, from entrance to platform.',metro_desc:'Find stations, entrances, transfers and the details that make your trip easier.',metro_f1:'Stations & exits',metro_f2:'Platform guidance',metro_f3:'Accessibility',live_name:'Transport Live Bucharest',live_kind:'Surface transport · Live',live_promise:'Know where your ride is and when it will arrive.',live_desc:'Follow buses, trams and trolleybuses with live tracking, arrival predictions and journey updates.',live_f1:'Live vehicle tracking',live_f2:'Arrival estimates',live_f3:'Journey updates',download:'Get it on',visit:'Visit website',foot:'Made for Bucharest.'},
     ro:{eyebrow:'Aplicațiile',head1:'Același scop.',head2:'Abordări diferite.',metro_kind:'Metrou · Navigare',metro_promise:'O călătorie mai ușoară cu metroul, de la intrare până la peron.',metro_desc:'Găsește stații, intrări, legături și informațiile care îți fac drumul mai simplu.',metro_f1:'Stații și ieșiri',metro_f2:'Ghidaj pe peroane',metro_f3:'Accesibilitate',live_name:'Transport București Live',live_kind:'Transport de suprafață · Live',live_promise:'Află unde este vehiculul tău și când va ajunge.',live_desc:'Urmărește autobuze, tramvaie și troleibuze, cu localizare live, estimări de sosire și informații despre traseu.',live_f1:'Localizare live',live_f2:'Estimări de sosire',live_f3:'Informații de călătorie',download:'Descarcă din',visit:'Vezi site-ul',foot:'Creat pentru București.'}
   };
   function setLanguage(lang){
@@ -135,6 +142,108 @@ main{padding:clamp(32px,5vh,58px) 0 42px}
   if(!translations[preferred])preferred=(navigator.language||'en').toLowerCase().startsWith('ro')?'ro':'en';
   setLanguage(preferred);
   document.querySelectorAll('[data-lang]').forEach(button=>button.addEventListener('click',()=>setLanguage(button.dataset.lang)));
+})();
+</script>
+<script>
+// The same fluid aurora fragment shader used by the original page,
+// running on native WebGL without any third-party JS dependencies.
+(function () {
+  'use strict';
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const host = document.getElementById('gl');
+  if (!host) return;
+  const canvas = document.createElement('canvas');
+  canvas.setAttribute('aria-hidden', 'true');
+  const gl = canvas.getContext('webgl', {alpha: false, antialias: false, powerPreference: 'low-power'});
+  if (!gl) return;  // Animated CSS fallback continues to run.
+
+  function compile(type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      console.warn('Aurora shader could not compile:', gl.getShaderInfoLog(shader));
+      gl.deleteShader(shader);
+      return null;
+    }
+    return shader;
+  }
+  const vertex = compile(gl.VERTEX_SHADER,
+      'attribute vec2 position; void main(){gl_Position=vec4(position,0.0,1.0);}');
+  const fragment = compile(gl.FRAGMENT_SHADER, `precision highp float;uniform float uTime,uScroll;uniform vec2 uRes;uniform vec3 cA,cB,cC,cBg;
+      vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}vec2 mod289(vec2 x){return x-floor(x*(1.0/289.0))*289.0;}
+      vec3 permute(vec3 x){return mod289(((x*34.0)+1.0)*x);}
+      float snoise(vec2 v){const vec4 C=vec4(0.211324865,0.366025403,-0.577350269,0.024390243);vec2 i=floor(v+dot(v,C.yy));vec2 x0=v-i+dot(i,C.xx);
+      vec2 i1=(x0.x>x0.y)?vec2(1.0,0.0):vec2(0.0,1.0);vec4 x12=x0.xyxy+C.xxzz;x12.xy-=i1;i=mod289(i);
+      vec3 p=permute(permute(i.y+vec3(0.0,i1.y,1.0))+i.x+vec3(0.0,i1.x,1.0));
+      vec3 m=max(0.5-vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.0);m=m*m;m=m*m;
+      vec3 x=2.0*fract(p*C.www)-1.0;vec3 h=abs(x)-0.5;vec3 ox=floor(x+0.5);vec3 a0=x-ox;m*=1.79284291-0.85373472*(a0*a0+h*h);
+      vec3 g;g.x=a0.x*x0.x+h.x*x0.y;g.yz=a0.yz*x12.xz+h.yz*x12.yw;return 130.0*dot(m,g);}
+      float fbm(vec2 p){float s=0.0,a=0.5;for(int i=0;i<5;i++){s+=a*snoise(p);p*=2.02;a*=0.5;}return s;}
+      void main(){vec2 uv=gl_FragCoord.xy/uRes.xy;vec2 p=uv;p.x*=uRes.x/uRes.y;float t=uTime*0.05+uScroll*0.6;
+      float n1=fbm(p*1.6+vec2(t,t*0.6));float n2=fbm(p*2.4-vec2(t*0.7,t*0.4)+n1);float m=smoothstep(-0.6,0.9,n1);
+      vec3 col=mix(cBg,cA,smoothstep(0.1,0.8,m));col=mix(col,cB,smoothstep(0.3,1.0,n2*0.7+0.4));
+      col=mix(col,cC,pow(smoothstep(0.55,1.0,n2),2.2)*0.5);float vig=smoothstep(1.25,0.2,length(uv-0.5));
+      col*=mix(0.55,1.0,vig);col=mix(cBg,col,0.9);gl_FragColor=vec4(col,1.0);}`);
+  if (!vertex || !fragment) return;
+  const program = gl.createProgram();
+  gl.attachShader(program, vertex);
+  gl.attachShader(program, fragment);
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+  gl.useProgram(program);
+  gl.deleteShader(vertex);
+  gl.deleteShader(fragment);
+  const vertices = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertices);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+  const pos = gl.getAttribLocation(program, 'position');
+  gl.enableVertexAttribArray(pos);
+  gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+  const loc = name => gl.getUniformLocation(program, name);
+  const uTime=loc('uTime'), uScroll=loc('uScroll'), uRes=loc('uRes');
+  function rgb(name, hex) {
+    const h=hex.replace('#','');
+    gl.uniform3f(loc(name),parseInt(h.slice(0,2),16)/255,
+      parseInt(h.slice(2,4),16)/255,parseInt(h.slice(4,6),16)/255);
+  }
+  rgb('cA','#5B8CFF'); rgb('cB','#8E7BFF');
+  rgb('cC','#E3B26B'); rgb('cBg','#06080F');
+  function resize() {
+    const pixelRatio=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=Math.round(innerWidth*pixelRatio);
+    canvas.height=Math.round(innerHeight*pixelRatio);
+    gl.viewport(0,0,canvas.width,canvas.height);
+    gl.uniform2f(uRes,canvas.width,canvas.height);
+  }
+  resize();
+  host.appendChild(canvas);
+  host.classList.add('has-webgl');
+  addEventListener('resize',resize,{passive:true});
+  let targetScroll=0, smoothScroll=0, rafId=0;
+  function onScroll(){
+    const max=document.documentElement.scrollHeight-innerHeight;
+    targetScroll=max>0?scrollY/max:0;
+  }
+  addEventListener('scroll',onScroll,{passive:true});
+  onScroll();
+  const started=performance.now();
+  function frame(now){
+    if(document.hidden){rafId=0;return;}
+    smoothScroll+=(targetScroll-smoothScroll)*0.05;
+    gl.uniform1f(uTime,(now-started)/1000);
+    gl.uniform1f(uScroll,smoothScroll);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    rafId=requestAnimationFrame(frame);
+  }
+  rafId=requestAnimationFrame(frame);
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden && !rafId) rafId=requestAnimationFrame(frame);
+  });
+  canvas.addEventListener('webglcontextlost',e=>{
+    e.preventDefault();cancelAnimationFrame(rafId);rafId=0;
+    host.classList.remove('has-webgl');
+  });
 })();
 </script>
 </body>
